@@ -16,6 +16,24 @@ blueprint:
         target:
           entity:
             domain: light
+    light_strength:
+      name: Light Strength
+      description: Light level for configured lamps on trigger.
+      default: 50
+      selector:
+        number:
+          min: 0
+          max: 100
+    time_from:
+      name: 'Timeslot from'
+      default: "22:00:00"
+      selector:
+        time:
+    time_to:
+      name: 'Timeslot to'
+      default: "07:00:00"
+      selector:
+        time:
     no_motion_wait:
       name: Wait time
       description: Time to leave the light on after last motion is detected.
@@ -37,9 +55,16 @@ trigger:
   from: "off"
   to: "on"
 
+condition:
+  - condition: time
+    after: !input time_from
+    before: !input time_to
+
 action:
   - service: light.turn_on
     target: !input light_target
+    data:
+      brightness_pct: !input light_strength
   - wait_for_trigger:
       platform: state
       entity_id: !input motion_entity
