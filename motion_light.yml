@@ -1,0 +1,74 @@
+blueprint:
+  name: Motion-activated Light with override
+  description: Turn a light on based on detected motion, provide override switch
+  domain: automation
+  input:
+    motion_sensor:
+      name: Motion Sensor
+      description: This sensor will be synchronized with the light.
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class: motion
+    target_light:
+      name: Lights
+      description: The lights to keep in sync.
+      selector:
+        target:
+          entity:
+            domain: light
+    light_strength:
+      name: Light Strength
+      description: Light level for configured lamps on trigger.
+      default: 50
+      selector:
+        number:
+          min: 0
+          max: 100
+    time_from:
+      name: 'Timeslot from'
+      default: "22:00:00"
+      selector:
+        time:
+    time_to:
+      name: 'Timeslot to'
+      default: "07:00:00"
+      selector:
+        time:
+    no_motion_wait:
+      name: Wait time
+      description: Time to leave the light on after last motion is detected.
+      default: 120
+      selector:
+        number:
+          min: 0
+          max: 3600
+          unit_of_measurement: seconds
+# If motion is detected within the delay,
+# we restart the script.
+mode: restart
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input motion_sensor
+    from: "off"
+    to: "on"
+    
+condition:
+  - condition: time
+    after: !input time_from
+    before: !input time_to
+    
+action:
+  action:
+  - service: light.turn_on
+    target: !input light_target
+  - wait_for_trigger:
+      platform: state
+      entity_id: !input motion_entity
+      from: "on"
+      to: "off"
+  - delay: !input no_motion_wait
+  - service: light.turn_off
+    target: !input light_target
